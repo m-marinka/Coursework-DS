@@ -3,6 +3,8 @@ from tkinter import Tk, Frame, Scrollbar, Label, END, Entry, Text, VERTICAL, But
 import random
 import pickle
 import numpy as np
+import tqdm
+import os
 
 
 class Client:
@@ -35,24 +37,37 @@ class Client:
             side='left')
         frame.pack(side='bottom', anchor='e')
 
+    def generate_file(self, file_name):
+        numbers = [np.random.randint(0, 100) for _ in range(10)]
+        new_file = open(file_name, 'a')
+        new_file.write(str(numbers).replace(", ", " "))
+
+    def send_file(self, file_name):
+        file_size = os.path.getsize(file_name)
+        send = tqdm.tqdm(range(file_size), f"Sending {file_name}", unit="B", unit_scalsend = tqdm.tqdm(range(file_size), f"Sending {file_name}", unit="B", unit_scale=True, unit_divisor=1024)
+
+
     def on_generate_button(self):
-        if len(self.filename_widget.get()) == 0:
+        file_name = self.filename_widget.get()
+        if len(file_name) == 0:
             messagebox.showerror(
                 "Enter a filename to generate a file")
             return
         else:
             self.filename_widget.config(state='disabled')
-            self.generate_file()
-            self.client_socket.send()
-
-    def generate_file(self):
-        numbers = [np.random.randint(0, 1000000000) for _ in range(1000005)]
-        filename = input(str())
-        with open(filename, 'a') as file:
-            file.write(' '.join(map(str, numbers)))
+            self.generate_file(file_name)
+            self.send_file(file_name)
+            # self.client_socket.send(f"{file_name}{2048}".encode('utf-8'))
 
     def on_close_window(self):
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
             self.root.destroy()
             self.client_socket.close()
             exit(0)
+
+
+if __name__ == '__main__':
+    root = Tk()
+    gui = Client(root)
+    root.protocol("WM_DELETE_WINDOW", gui.on_close_window)
+    root.mainloop()
