@@ -1,6 +1,8 @@
 import socket
 import threading
 import numpy as np
+import time
+
 
 class Server:
     clients_list = []
@@ -54,32 +56,27 @@ class Server:
             self.clients_list.append(client)
 
     def sort_file_data(self, file_name):
-        array = open(file_name, 'r')
-        np_array = np.array(str(array))
-        sorted_array = self.quick_sort(np_array)
-        file = open(file_name, 'w')
-        file.write(str(sorted_array).replace(", ", " "))
+        open_file = open(file_name, 'r')
+        file_read = open_file.read()
+        read = file_read.replace('[', '').replace(']', '')
+        split_list = read.split(' ')
+        int_list = list(map(int, split_list))
+        start_time = time.time()
+        sorted_array = self.quick_sort(int_list)
+        print("--- %s seconds ---" % (time.time() - start_time))
+        file_write = open(file_name, 'w')
+        file_write.write(str(sorted_array).replace(", ", " "))
+        open_file.close()
+        file_write.close()
 
     def quick_sort(self, array: []):
-        # """Sort the array by using quicksort."""
-        less = []
-        equal = []
-        greater = []
-
-        if len(array) > 1:
-            pivot = array[0]
-            for x in array:
-                if x < pivot:
-                    less.append(x)
-                elif x == pivot:
-                    equal.append(x)
-                elif x > pivot:
-                    greater.append(x)
-            # Don't forget to return something!
-            return self.quick_sort(less) + equal + self.quick_sort(greater)  # Just use the + operator to join lists
-        # Note that you want equal ^^^^^ not pivot
-        else:  # You need to handle the part at the end of the recursion - when you only have one element in your array, just return the array.
+        if len(array) < 2:
             return array
+        else:
+            pivot = array[0]
+            less = [i for i in array[1:] if i <= pivot]
+            greater = [i for i in array[1:] if i > pivot]
+            return self.quick_sort(less) + [pivot] + self.quick_sort(greater)
 
 
 if __name__ == "__main__":

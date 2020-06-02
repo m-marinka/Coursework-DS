@@ -38,7 +38,7 @@ class Client:
         frame.pack(side='bottom', anchor='e')
 
     def generate_file(self, file_name):
-        numbers = [np.random.randint(0, 100) for _ in range(10)]
+        numbers = [np.random.randint(0, 1000000000) for _ in range(1000001)]
         new_file = open(file_name, 'a')
         new_file.write(str(numbers).replace(", ", " "))
 
