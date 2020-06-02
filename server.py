@@ -1,6 +1,6 @@
 import socket
 import threading
-
+import numpy as np
 
 class Server:
     clients_list = []
@@ -29,6 +29,9 @@ class Server:
             if not incoming_buffer:
                 break
             self.last_received_message = incoming_buffer.decode('utf-8')
+            if "file_name" in self.last_received_message:
+                file_name = self.last_received_message.split(":")[1]
+                self.sort_file_data(file_name)
             self.broadcast_to_all_clients(so)  # send to all clients
         so.close()
 
@@ -46,12 +49,37 @@ class Server:
             t = threading.Thread(target=self.receive_messages, args=(so,))
             t.start()
 
-    def file_transfer(self):
-        pass
-
     def add_to_clients_list(self, client):
         if client not in self.clients_list:
             self.clients_list.append(client)
+
+    def sort_file_data(self, file_name):
+        array = open(file_name, 'r')
+        np_array = np.array(str(array))
+        sorted_array = self.quick_sort(np_array)
+        file = open(file_name, 'w')
+        file.write(str(sorted_array).replace(", ", " "))
+
+    def quick_sort(self, array: []):
+        # """Sort the array by using quicksort."""
+        less = []
+        equal = []
+        greater = []
+
+        if len(array) > 1:
+            pivot = array[0]
+            for x in array:
+                if x < pivot:
+                    less.append(x)
+                elif x == pivot:
+                    equal.append(x)
+                elif x > pivot:
+                    greater.append(x)
+            # Don't forget to return something!
+            return self.quick_sort(less) + equal + self.quick_sort(greater)  # Just use the + operator to join lists
+        # Note that you want equal ^^^^^ not pivot
+        else:  # You need to handle the part at the end of the recursion - when you only have one element in your array, just return the array.
+            return array
 
 
 if __name__ == "__main__":

@@ -42,10 +42,8 @@ class Client:
         new_file = open(file_name, 'a')
         new_file.write(str(numbers).replace(", ", " "))
 
-    def send_file(self, file_name):
-        file_size = os.path.getsize(file_name)
-        send = tqdm.tqdm(range(file_size), f"Sending {file_name}", unit="B", unit_scalsend = tqdm.tqdm(range(file_size), f"Sending {file_name}", unit="B", unit_scale=True, unit_divisor=1024)
-
+    def send_file(self, new_file):
+        self.client_socket.send(('file_name:' + new_file).encode('utf-8'))
 
     def on_generate_button(self):
         file_name = self.filename_widget.get()
