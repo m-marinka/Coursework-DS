@@ -12,10 +12,13 @@ class Client:
 
     def __init__(self, master):
         self.root = master
+        self.chat_transcript_area = None
         self.initialize_socket()
         self.filename_widget = None
         self.initialize_gui()
         self.on_generate_button = None
+        self.echo_text_widget = None
+        self.on_echo_button = None
 
     def initialize_socket(self):
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -27,14 +30,35 @@ class Client:
         self.root.title("Socket Chat")
         self.root.resizable(0, 0)
         self.display_filename_section()
+        self.display_echo_text_section()
+        self.display_chat_box()
+
+    def display_chat_box(self):
+        frame = Frame()
+        Label(frame, text='Chat Box:', font=("Serif", 12)).pack(side='top', anchor='w')
+        self.chat_transcript_area = Text(frame, width=60, height=10, font=("Serif", 12))
+        scrollbar = Scrollbar(frame, command=self.chat_transcript_area.yview, orient=VERTICAL)
+        self.chat_transcript_area.config(yscrollcommand=scrollbar.set)
+        self.chat_transcript_area.bind('<KeyPress>', lambda e: 'break')
+        self.chat_transcript_area.pack(side='left', padx=10)
+        scrollbar.pack(side='right', fill='y')
+        frame.pack(side='top')
+
+    def display_echo_text_section(self):
+        frame = Frame()
+        Label(Label(frame, text='Enter an echo text:', font=('Helvetica', 12)).pack(side='left', padx=10))
+        self.echo_text_widget = Entry(frame, width=50, borderwidth=2)
+        self.echo_text_widget.pack(side='left', anchor='sw')
+        self.on_echo_button = Button(frame, text='Echo', width=10, command=self.on_echo_button).pack(side='left')
+        frame.pack(side='bottom', anchor='e')
 
     def display_filename_section(self):
         frame = Frame()
-        Label(frame, text='Enter a filename: ', font=('Helvetica', 12)).pack(side='left', padx=10)
+        Label(frame, text='Enter a filename:', font=('Helvetica', 12)).pack(side='left', padx=10)
         self.filename_widget = Entry(frame, width=50, borderwidth=2)
         self.filename_widget.pack(side='left', anchor='sw')
-        self.on_generate_button = Button(frame, text='Generate', width=10, command=self.on_generate_button).pack(
-            side='left')
+        self.on_generate_button = Button(frame, text='Generate', width=10, command=self.on_generate_button).pack(side=
+                                                                                                                 'left')
         frame.pack(side='bottom', anchor='e')
 
     def generate_file(self, file_name):
@@ -56,6 +80,21 @@ class Client:
             self.generate_file(file_name)
             self.send_file(file_name)
             # self.client_socket.send(f"{file_name}{2048}".encode('utf-8'))
+
+    def on_echo_button(self):
+        echo_message = self.echo_text_widget.get()
+        if len(echo_message) == 0:
+            messagebox.showerror("Enter a text to send an echo command.")
+            return
+        else:
+            self.echo_text_widget.config(state='disabled')
+            self.send_echo_command()
+
+    def send_echo_command(self):
+        echo_message = self.echo_text_widget.get()
+        self.client_socket.send(('echo:' + echo_message).encode('utf-8'))
+        self.client_socket.send(echo_message)
+        self.echo_text_widget.delete(1.0, 'end')
 
     def on_close_window(self):
         if messagebox.askokcancel("Quit", "Do you want to quit?"):

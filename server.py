@@ -10,11 +10,10 @@ class Server:
     last_received_message = ""
 
     def __init__(self):
-        self.server_socket = None
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.create_listening_server()
 
     def create_listening_server(self):
-        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         local_ip = '127.0.0.1'
         local_port = 10319
         # this will allow you to immediately restart a TCP server
@@ -34,6 +33,9 @@ class Server:
             if "file_name" in self.last_received_message:
                 file_name = self.last_received_message.split(":")[1]
                 self.sort_file_data(file_name)
+            elif "echo" in self.last_received_message:
+                echo_message = self.last_received_message.split(":")[1]
+                self.return_echo_message(echo_message)
             self.broadcast_to_all_clients(so)  # send to all clients
         so.close()
 
@@ -77,6 +79,9 @@ class Server:
             less = [i for i in array[1:] if i <= pivot]
             greater = [i for i in array[1:] if i > pivot]
             return self.quick_sort(less) + [pivot] + self.quick_sort(greater)
+
+    def return_echo_message(self, echo_message):
+        self.server_socket.send(echo_message.encode('utf-8'))
 
 
 if __name__ == "__main__":
