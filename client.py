@@ -1,3 +1,6 @@
+import os
+
+from pythonping import ping
 import socket
 from tkinter import Tk, Frame, Scrollbar, Label, END, Entry, Text, VERTICAL, Button, messagebox
 import numpy as np
@@ -20,6 +23,7 @@ class Client:
         self.initialize_gui()
         self.on_generate_button = None
         self.echo_button = None
+        self.ping_button = None
         self.listen_for_incoming_messages_in_a_thread()
 
     def initialize_socket(self):
@@ -36,6 +40,7 @@ class Client:
         self.display_chat_box()
         self.display_name_section()
         self.display_chat_entry_box()
+        self.display_ping_section()
 
     def listen_for_incoming_messages_in_a_thread(self):
         thread = threading.Thread(target=self.receive_message_from_server, args=(self.client_socket,))
@@ -171,6 +176,22 @@ class Client:
             self.generate_file(file_name)
             self.send_file(file_name)
             # self.client_socket.send(f"{file_name}{2048}".encode('utf-8'))
+
+    def display_ping_section(self):
+        frame = Frame()
+        self.ping_button = Button(frame, text="Ping", width=10, command=self.on_ping).pack(side='bottom')
+        frame.pack(side='bottom', anchor='s')
+
+    def on_ping(self):
+        hostname = "127.0.0.1"
+        response = os.system("ping -c 1 " + hostname)
+        # and then check the response...
+        if response == 0:
+            pingstatus = "Network Active"
+        else:
+            pingstatus = "Network Error"
+
+        return self.chat_transcript_area.insert('end', pingstatus + '\n')
 
     def on_close_window(self):
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
