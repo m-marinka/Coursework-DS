@@ -1,6 +1,5 @@
 import socket
 import threading
-import numpy as np
 import time
 
 
@@ -15,7 +14,7 @@ class Server:
 
     def create_listening_server(self):
         local_ip = '127.0.0.1'
-        local_port = 10319
+        local_port = 10318
         # this will allow you to immediately restart a TCP server
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         # this makes the server listen to requests coming from other computers on the network
@@ -29,14 +28,16 @@ class Server:
             incoming_buffer = so.recv(256)
             if not incoming_buffer:
                 break
+            self.last_received_message = incoming_buffer.decode('utf-8')
             if "file_name" in self.last_received_message:
                 file_name = self.last_received_message.split(":")[1]
                 self.sort_file_data(file_name)
             elif "echo" in self.last_received_message:
                 echo_message = self.last_received_message.split(":")[1]
                 self.return_echo_message(echo_message)
-            self.last_received_message = incoming_buffer.decode('utf-8')
-            self.broadcast_to_all_clients(so)  # send to all clients
+                self.broadcast_to_all_clients(so)
+            else:
+                self.broadcast_to_all_clients(so)  # send to all clients
         so.close()
 
     def broadcast_to_all_clients(self, senders_socket):

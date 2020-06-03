@@ -1,10 +1,10 @@
 import socket
 from tkinter import Tk, Frame, Scrollbar, Label, END, Entry, Text, VERTICAL, Button, messagebox
-import random
-import pickle
+# import random
+# import pickle
 import numpy as np
-import tqdm
-import os
+# import tqdm
+# import os
 import threading
 
 
@@ -15,6 +15,7 @@ class Client:
     def __init__(self, master):
         self.root = master
         self.chat_transcript_area = None
+        self.echo_text_widget = None
         self.name_widget = None
         self.enter_text_widget = None
         self.join_button = None
@@ -22,14 +23,13 @@ class Client:
         self.filename_widget = None
         self.initialize_gui()
         self.on_generate_button = None
-        self.echo_text_widget = None
-        self.on_echo_button = None
+        self.echo_button = None
         self.listen_for_incoming_messages_in_a_thread()
 
     def initialize_socket(self):
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         remote_ip = '127.0.0.1'
-        remote_port = 10319
+        remote_port = 10318
         self.client_socket.connect((remote_ip, remote_port))
 
     def initialize_gui(self):
@@ -56,6 +56,11 @@ class Client:
             if "joined" in message:
                 user = message.split(":")[1]
                 message = user + " has joined"
+                self.chat_transcript_area.insert('end', message + '\n')
+                self.chat_transcript_area.yview(END)
+            elif "echo" in message:
+                echo_command = message.split(":")[1]
+                message = echo_command + "is echo command"
                 self.chat_transcript_area.insert('end', message + '\n')
                 self.chat_transcript_area.yview(END)
             else:
@@ -125,8 +130,22 @@ class Client:
         Label(Label(frame, text='Enter an echo text:', font=('Helvetica', 12)).pack(side='left', padx=10))
         self.echo_text_widget = Entry(frame, width=50, borderwidth=2)
         self.echo_text_widget.pack(side='left', anchor='sw')
-        self.on_echo_button = Button(frame, text='Echo', width=10, command=self.on_echo_button).pack(side='left')
+        self.echo_button = Button(frame, text='Echo', width=10, command=self.on_echo).pack(side='left')
         frame.pack(side='bottom', anchor='e')
+
+    # def send_echo_command(self):
+    #     echo_message = self.echo_text_widget.get()
+    #     self.client_socket.send(('echo:' + echo_message).encode('utf-8'))
+        # self.client_socket.send(echo_message)
+        # self.echo_text_widget.delete(1.0, 'end')
+
+    def on_echo(self):
+        if len(self.echo_text_widget.get()) == 0:
+            messagebox.showerror("Enter a text to send an echo command.")
+            return
+        else:
+            self.echo_text_widget.config(state='disabled')
+            self.client_socket.send(("echo:" + self.echo_text_widget.get()).encode('utf-8'))
 
     def display_filename_section(self):
         frame = Frame()
@@ -138,12 +157,12 @@ class Client:
         frame.pack(side='bottom', anchor='e')
 
     def generate_file(self, file_name):
-        numbers = [np.random.randint(0, 1000000000) for _ in range(1000001)]
+        numbers = [np.random.randint(0, 1000000000) for _ in range(1000002)]
         new_file = open(file_name, 'a')
         new_file.write(str(numbers).replace(", ", " "))
 
-    def send_file(self, new_file):
-        self.client_socket.send(('file_name:' + new_file).encode('utf-8'))
+    def send_file(self, file_name):
+        self.client_socket.send(("file_name:" + file_name).encode('utf-8'))
 
     def on_generate_button(self):
         file_name = self.filename_widget.get()
@@ -156,20 +175,6 @@ class Client:
             self.generate_file(file_name)
             self.send_file(file_name)
             # self.client_socket.send(f"{file_name}{2048}".encode('utf-8'))
-
-    def send_echo_command(self):
-        echo_message = self.echo_text_widget.get()
-        self.client_socket.send(('echo:' + echo_message).encode('utf-8'))
-        self.client_socket.send(echo_message)
-        self.echo_text_widget.delete(1.0, 'end')
-
-    def on_echo_button(self):
-        if len(self.echo_text_widget.get()) == 0:
-            messagebox.showerror("Enter a text to send an echo command.")
-            return
-        else:
-            self.echo_text_widget.config(state='disabled')
-            self.send_echo_command()
 
     def on_close_window(self):
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
