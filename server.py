@@ -29,13 +29,13 @@ class Server:
             incoming_buffer = so.recv(256)
             if not incoming_buffer:
                 break
-            self.last_received_message = incoming_buffer.decode('utf-8')
             if "file_name" in self.last_received_message:
                 file_name = self.last_received_message.split(":")[1]
                 self.sort_file_data(file_name)
             elif "echo" in self.last_received_message:
                 echo_message = self.last_received_message.split(":")[1]
                 self.return_echo_message(echo_message)
+            self.last_received_message = incoming_buffer.decode('utf-8')
             self.broadcast_to_all_clients(so)  # send to all clients
         so.close()
 
@@ -71,6 +71,9 @@ class Server:
         open_file.close()
         file_write.close()
 
+    def return_echo_message(self, echo_message):
+        self.server_socket.send(echo_message.encode('utf-8'))
+
     def quick_sort(self, array: []):
         if len(array) < 2:
             return array
@@ -79,9 +82,6 @@ class Server:
             less = [i for i in array[1:] if i <= pivot]
             greater = [i for i in array[1:] if i > pivot]
             return self.quick_sort(less) + [pivot] + self.quick_sort(greater)
-
-    def return_echo_message(self, echo_message):
-        self.server_socket.send(echo_message.encode('utf-8'))
 
 
 if __name__ == "__main__":

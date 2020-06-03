@@ -5,20 +5,26 @@ import pickle
 import numpy as np
 import tqdm
 import os
+import threading
 
 
 class Client:
     client_socket = None
+    last_received_message = None
 
     def __init__(self, master):
         self.root = master
         self.chat_transcript_area = None
+        self.name_widget = None
+        self.enter_text_widget = None
+        self.join_button = None
         self.initialize_socket()
         self.filename_widget = None
         self.initialize_gui()
         self.on_generate_button = None
         self.echo_text_widget = None
         self.on_echo_button = None
+        self.listen_for_incoming_messages_in_a_thread()
 
     def initialize_socket(self):
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -32,6 +38,39 @@ class Client:
         self.display_filename_section()
         self.display_echo_text_section()
         self.display_chat_box()
+        self.display_name_section()
+        self.display_chat_entry_box()
+
+    def listen_for_incoming_messages_in_a_thread(self):
+        thread = threading.Thread(target=self.receive_message_from_server, args=(self.client_socket,))
+        thread.start()
+
+    def receive_message_from_server(self, so):
+        while True:
+            buffer = so.recv(256)
+            if not buffer:
+                break
+            message = buffer.decode('utf-8')
+            # self.chat_transcript_area.insert('end', message + '\n')
+            # self.chat_transcript_area.yview(END)
+            if "joined" in message:
+                user = message.split(":")[1]
+                message = user + " has joined"
+                self.chat_transcript_area.insert('end', message + '\n')
+                self.chat_transcript_area.yview(END)
+            else:
+                self.chat_transcript_area.insert('end', message + '\n')
+                self.chat_transcript_area.yview(END)
+
+        so.close()
+
+    def display_name_section(self):
+        frame = Frame()
+        Label(frame, text='Enter your name:', font=("Helvetica", 16)).pack(side='left', padx=10)
+        self.name_widget = Entry(frame, width=50, borderwidth=2)
+        self.name_widget.pack(side='left', anchor='e')
+        self.join_button = Button(frame, text="Join", width=10, command=self.on_join).pack(side='left')
+        frame.pack(side='top', anchor='nw')
 
     def display_chat_box(self):
         frame = Frame()
@@ -43,6 +82,43 @@ class Client:
         self.chat_transcript_area.pack(side='left', padx=10)
         scrollbar.pack(side='right', fill='y')
         frame.pack(side='top')
+
+    def display_chat_entry_box(self):
+        frame = Frame()
+        Label(frame, text='Enter message:', font=("Serif", 12)).pack(side='top', anchor='w')
+        self.enter_text_widget = Text(frame, width=60, height=3, font=("Serif", 12))
+        self.enter_text_widget.pack(side='left', pady=15)
+        self.enter_text_widget.bind('<Return>', self.on_enter_key_pressed)
+        frame.pack(side='top')
+
+    def on_join(self):
+        if len(self.name_widget.get()) == 0:
+            messagebox.showerror(
+                "Enter your name", "Enter your name to send a message")
+            return
+        self.name_widget.config(state='disabled')
+        self.client_socket.send(("joined:" + self.name_widget.get()).encode('utf-8'))
+
+    def on_enter_key_pressed(self, event):
+        if len(self.name_widget.get()) == 0:
+            messagebox.showerror(
+                "Enter your name", "Enter your name to send a message")
+            return
+        self.send_chat()
+        self.clear_text()
+
+    def clear_text(self):
+        self.enter_text_widget.delete(1.0, 'end')
+
+    def send_chat(self):
+        senders_name = self.name_widget.get().strip() + ": "
+        data = self.enter_text_widget.get(1.0, 'end').strip()
+        message = (senders_name + data).encode('utf-8')
+        self.chat_transcript_area.insert('end', message.decode('utf-8') + '\n')
+        self.chat_transcript_area.yview(END)
+        self.client_socket.send(message)
+        self.enter_text_widget.delete(1.0, 'end')
+        return 'break'
 
     def display_echo_text_section(self):
         frame = Frame()
@@ -81,20 +157,19 @@ class Client:
             self.send_file(file_name)
             # self.client_socket.send(f"{file_name}{2048}".encode('utf-8'))
 
-    def on_echo_button(self):
-        echo_message = self.echo_text_widget.get()
-        if len(echo_message) == 0:
-            messagebox.showerror("Enter a text to send an echo command.")
-            return
-        else:
-            self.echo_text_widget.config(state='disabled')
-            self.send_echo_command()
-
     def send_echo_command(self):
         echo_message = self.echo_text_widget.get()
         self.client_socket.send(('echo:' + echo_message).encode('utf-8'))
         self.client_socket.send(echo_message)
         self.echo_text_widget.delete(1.0, 'end')
+
+    def on_echo_button(self):
+        if len(self.echo_text_widget.get()) == 0:
+            messagebox.showerror("Enter a text to send an echo command.")
+            return
+        else:
+            self.echo_text_widget.config(state='disabled')
+            self.send_echo_command()
 
     def on_close_window(self):
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
