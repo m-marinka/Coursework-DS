@@ -1,10 +1,6 @@
 import socket
 from tkinter import Tk, Frame, Scrollbar, Label, END, Entry, Text, VERTICAL, Button, messagebox
-# import random
-# import pickle
 import numpy as np
-# import tqdm
-# import os
 import threading
 
 
