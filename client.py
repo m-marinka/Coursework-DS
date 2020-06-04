@@ -1,6 +1,4 @@
 import os
-
-from pythonping import ping
 import socket
 from tkinter import Tk, Frame, Scrollbar, Label, END, Entry, Text, VERTICAL, Button, messagebox
 import numpy as np
@@ -52,8 +50,6 @@ class Client:
             if not buffer:
                 break
             message = buffer.decode('utf-8')
-            # self.chat_transcript_area.insert('end', message + '\n')
-            # self.chat_transcript_area.yview(END)
             if "joined" in message:
                 user = message.split(":")[1]
                 message = user + " has joined"
@@ -134,12 +130,6 @@ class Client:
         self.echo_button = Button(frame, text='Echo', width=10, command=self.on_echo).pack(side='left')
         frame.pack(side='bottom', anchor='e')
 
-    # def send_echo_command(self):
-    #     echo_message = self.echo_text_widget.get()
-    #     self.client_socket.send(('echo:' + echo_message).encode('utf-8'))
-        # self.client_socket.send(echo_message)
-        # self.echo_text_widget.delete(1.0, 'end')
-
     def on_echo(self):
         if len(self.echo_text_widget.get()) == 0:
             messagebox.showerror("Enter a text to send an echo command.")
@@ -175,7 +165,6 @@ class Client:
             self.filename_widget.config(state='disabled')
             self.generate_file(file_name)
             self.send_file(file_name)
-            # self.client_socket.send(f"{file_name}{2048}".encode('utf-8'))
 
     def display_ping_section(self):
         frame = Frame()
@@ -185,7 +174,7 @@ class Client:
     def on_ping(self):
         hostname = "127.0.0.1"
         response = os.system("ping -c 1 " + hostname)
-        # and then check the response...
+        # check the response...
         if response == 0:
             pingstatus = "Network Active"
         else:

@@ -35,17 +35,9 @@ class Server:
             elif "echo" in self.last_received_message:
                 echo_message = self.last_received_message.split(":")[1]
                 self.return_echo_message(echo_message, so)
-                # self.broadcast_to_all_clients(so)
-                # self.messages_for_clients_in_clients_list(so)
             else:
                 self.broadcast_to_all_clients(so)  # send to all clients
         so.close()
-
-    # def messages_for_clients_in_clients_list(self, senders_socket):
-    #     for client in self.clients_list:
-    #         socket, (ip, port) = client
-    #         if socket is senders_socket:
-    #             socket.sendall(self.last_received_message.encode('utf-8'))
 
     def broadcast_to_all_clients(self, senders_socket):
         for client in self.clients_list:
@@ -80,12 +72,10 @@ class Server:
         file_write.close()
 
     def return_echo_message(self, echo_message, senders_socket):
-        # for client in self.clients_list:
-        #     socket, (ip, port) = client
-        #     if socket is senders_socket:
-        #         socket.sendall(echo_message.encode('utf-8'))
-        self.server_socket.accept()
-        self.server_socket.send(echo_message.encode('utf-8'))
+        for client in self.clients_list:
+            socket, (ip, port) = client
+            if socket is senders_socket:
+                socket.sendall(echo_message.encode('utf-8'))
 
     def quick_sort(self, array: []):
         if len(array) < 2:
