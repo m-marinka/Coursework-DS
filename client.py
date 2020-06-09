@@ -55,11 +55,6 @@ class Client:
                 message = user + " has joined"
                 self.chat_transcript_area.insert('end', message + '\n')
                 self.chat_transcript_area.yview(END)
-            elif "echo" in message:
-                echo_command = message.split(":")[1]
-                message = echo_command + "is echo command"
-                self.chat_transcript_area.insert('end', message + '\n')
-                self.chat_transcript_area.yview(END)
             else:
                 self.chat_transcript_area.insert('end', message + '\n')
                 self.chat_transcript_area.yview(END)
